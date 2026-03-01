@@ -1,6 +1,6 @@
 /**
  * Story Ideas - Episode Suggestion Extension for SillyTavern
- * 마지막 메시지 아래에 가로 카드 블록으로 에피소드 추천 표시
+ * 마지막 메시지 아래에 에피소드 추천 카드 표시
  */
 
 import { event_types } from '../../../events.js';
@@ -19,17 +19,15 @@ Consider:
 - Relationship developments or conflicts
 - Interesting "what if" scenarios that fit the setting
 
-Each suggestion should include a short title and a description.`;
+Each suggestion should include a short title and a brief 1-2 sentence description.`;
 
 const DEFAULTS = {
     enabled: true,
     apiSource: 'main',
     connectionProfileId: '',
     count: 3,
-    detailLevel: 'normal',
     lang: 'en',
     prompt: INITIAL_PROMPT,
-    promptPresets: {},
     cache: {},
 };
 
@@ -61,46 +59,9 @@ async function boot() {
         if (cfg[k] === undefined) cfg[k] = v;
     }
 
-    seedPresets();
     await mountSettings();
     bindEvents();
     console.log(`[${EXT_NAME}] Ready.`);
-}
-
-function seedPresets() {
-    if (!cfg.promptPresets) cfg.promptPresets = {};
-    if (Object.keys(cfg.promptPresets).length > 0) return;
-
-    cfg.promptPresets['Default'] = INITIAL_PROMPT;
-
-    cfg.promptPresets['Drama & Conflict'] = `Suggest dramatic episode ideas focusing on interpersonal conflicts, betrayals, moral dilemmas, and emotionally charged confrontations.
-
-Consider:
-- Hidden secrets being revealed
-- Loyalties being tested
-- Impossible choices the characters must face
-- Power struggles and shifting alliances
-- Emotional breaking points`;
-
-    cfg.promptPresets['Adventure & Exploration'] = `Suggest adventure-oriented episode ideas involving quests, discoveries, and world exploration.
-
-Consider:
-- Unexplored locations or mysterious places
-- Dangerous missions or objectives
-- New characters or factions encountered
-- Environmental challenges and survival
-- Treasures, artifacts, or hidden knowledge`;
-
-    cfg.promptPresets['Slice of Life'] = `Suggest slice-of-life episode ideas that deepen character relationships through everyday moments.
-
-Consider:
-- Casual outings or shared activities
-- Heartfelt conversations and bonding
-- Humorous misunderstandings
-- Personal growth moments
-- Quiet, meaningful interactions`;
-
-    persist();
 }
 
 // ─── 설정 패널 ───
@@ -131,9 +92,13 @@ async function mountSettings() {
         (p) => { cfg.connectionProfileId = p?.id ?? ''; persist(); },
     );
 
-    bindField(root, '.si_count', 'count', true);
-    bindField(root, '.si_detail_level', 'detailLevel');
-    bindField(root, '.si_lang', 'lang');
+    root.find('.si_count').val(cfg.count).on('change', function () {
+        cfg.count = Number($(this).val()); persist();
+    });
+
+    root.find('.si_lang').val(cfg.lang).on('change', function () {
+        cfg.lang = $(this).val(); persist();
+    });
 
     root.find('.si_prompt').val(cfg.prompt).on('change', function () {
         cfg.prompt = $(this).val(); persist();
@@ -147,59 +112,11 @@ async function mountSettings() {
             toastr.success('프롬프트 초기화됨');
         }
     });
-
-    mountPresetUI(root);
-}
-
-function bindField(root, sel, key, isNum) {
-    root.find(sel).val(cfg[key]).on('change', function () {
-        cfg[key] = isNum ? Number($(this).val()) : $(this).val();
-        persist();
-    });
-}
-
-function mountPresetUI(root) {
-    const sel = root.find('.si_prompt_preset');
-    function refresh() {
-        sel.empty();
-        Object.keys(cfg.promptPresets || {}).forEach(n => sel.append(`<option value="${n}">${n}</option>`));
-    }
-    refresh();
-
-    root.find('.si_preset_load').on('click', () => {
-        const n = sel.val();
-        if (!n || !cfg.promptPresets[n]) return;
-        cfg.prompt = cfg.promptPresets[n];
-        root.find('.si_prompt').val(cfg.prompt);
-        persist();
-        toastr.success(`"${n}" 적용됨`);
-    });
-
-    root.find('.si_preset_save').on('click', async () => {
-        const n = await ctx.Popup.show.input('프리셋 이름:', '저장');
-        if (!n?.trim()) return;
-        const t = n.trim();
-        if (cfg.promptPresets[t] && !await ctx.Popup.show.confirm(`"${t}" 덮어쓸까요?`, '덮어쓰기')) return;
-        cfg.promptPresets[t] = cfg.prompt;
-        persist(); refresh(); sel.val(t);
-        toastr.success(`"${t}" 저장됨`);
-    });
-
-    root.find('.si_preset_del').on('click', async () => {
-        const n = sel.val();
-        if (!n) return toastr.warning('프리셋을 선택하세요.');
-        if (await ctx.Popup.show.confirm(`"${n}" 삭제?`, '삭제')) {
-            delete cfg.promptPresets[n];
-            persist(); refresh();
-            toastr.success(`"${n}" 삭제됨`);
-        }
-    });
 }
 
 // ─── 이벤트 ───
 
 function bindEvents() {
-    // 마법봉 메뉴 버튼
     const menuBtn = document.createElement('div');
     menuBtn.id = 'si_menu_btn';
     menuBtn.className = 'list-group-item flex-container flexGap5 interactable';
@@ -211,14 +128,12 @@ function bindEvents() {
         if (!cfg.enabled || generating) return;
         $('#extensionsMenu').hide();
 
-        // 캐시 확인
         const key = chatKey();
         if (key && cfg.cache[key]?.ideas?.length) {
             renderBlock(cfg.cache[key].ideas);
             scrollToBlock();
             return;
         }
-
         await generate();
     });
 
@@ -233,52 +148,31 @@ function bindEvents() {
         obs.observe(document.body, { childList: true, subtree: true });
     }
 
-    // 채팅 변경 시 기존 블록 제거
-    ctx.eventSource.on(event_types.CHAT_CHANGED, () => {
-        removeBlock();
-    });
+    ctx.eventSource.on(event_types.CHAT_CHANGED, () => removeBlock());
 }
 
-// ─── 블록 삽입/제거 ───
+// ─── 블록 ───
 
-function removeBlock() {
-    $('#si-block').remove();
-}
-
-function getInsertTarget() {
-    // 채팅 영역의 마지막 메시지 뒤에 삽입
-    const chatEl = $('#chat');
-    return chatEl;
-}
+function removeBlock() { $('#si-block').remove(); }
 
 function scrollToBlock() {
-    const block = document.getElementById('si-block');
-    if (block) {
-        block.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
+    const el = document.getElementById('si-block');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 // ─── 생성 ───
 
 async function generate() {
-    if (generating) return;
-    if (!cfg.enabled) return;
+    if (generating || !cfg.enabled) return;
 
     if (cfg.apiSource === 'profile' && !cfg.connectionProfileId) {
         toastr.warning('Connection Profile을 선택하세요.');
         return;
     }
-
-    if (!ctx.chat?.length) {
-        toastr.warning('대화 내역이 없습니다.');
-        return;
-    }
+    if (!ctx.chat?.length) { toastr.warning('대화 내역이 없습니다.'); return; }
 
     const lastBot = findLastBot();
-    if (lastBot === -1) {
-        toastr.warning('봇 메시지가 없습니다.');
-        return;
-    }
+    if (lastBot === -1) { toastr.warning('봇 메시지가 없습니다.'); return; }
 
     generating = true;
     showLoading();
@@ -296,7 +190,6 @@ async function generate() {
             const msgs = await gatherMessages(lastBot);
             msgs.push({ role: 'user', content: instruction });
             if (!ctx.ConnectionManagerRequestService) throw new Error('Connection Manager 미로드');
-
             const resp = await ctx.ConnectionManagerRequestService.sendRequest(
                 cfg.connectionProfileId, msgs, 4000,
                 { stream: false, extractData: true, includePreset: false, includeInstruct: false },
@@ -313,10 +206,7 @@ async function generate() {
         if (!ideas?.length) throw new Error('파싱 실패');
 
         const key = chatKey();
-        if (key) {
-            cfg.cache[key] = { ideas, ts: Date.now() };
-            persist();
-        }
+        if (key) { cfg.cache[key] = { ideas, ts: Date.now() }; persist(); }
 
         renderBlock(ideas);
         scrollToBlock();
@@ -336,7 +226,6 @@ function buildInstruction() {
     const langNote = (cfg.lang || 'en') === 'ko'
         ? '⚠️ 모든 추천을 한국어로 작성하세요.'
         : '⚠️ Write all suggestions in English.';
-    const detail = { brief: '1-2 sentences', normal: '3-5 sentences', detailed: '6+ sentences' };
 
     return `${ctx.substituteParams(cfg.prompt)}
 
@@ -345,15 +234,15 @@ ${langNote}
 OUTPUT FORMAT - Use this EXACT structure:
 <suggestions>
 [Title of idea 1]
-Description here.
+Brief 1-2 sentence description.
 
 [Title of idea 2]
-Description here.
+Brief 1-2 sentence description.
 </suggestions>
 
 Rules:
 - Exactly ${cfg.count} suggestions
-- Detail: ${detail[cfg.detailLevel] || detail.normal} per idea
+- Keep each description to 1-2 sentences (brief and concise)
 - Title in [brackets], description on next lines
 - Wrap in <suggestions>...</suggestions>
 - NO text outside the tags`;
@@ -494,32 +383,69 @@ function renderBlock(ideas) {
     // 헤더
     const head = $('<div class="si-block-head"></div>');
     head.append('<span class="si-block-title">💡 에피소드 추천</span>');
-
     const btns = $('<div class="si-block-btns"></div>');
     btns.append('<button class="si-block-btn si-do-refresh" title="새로 생성">🔄</button>');
     btns.append('<button class="si-block-btn si-do-delete" title="삭제">🗑️</button>');
     head.append(btns);
     block.append(head);
 
-    // 카드 영역
+    // 카드
     const cards = $('<div class="si-cards"></div>');
     ideas.forEach((idea, i) => {
-        cards.append(`
+        const fullText = `${idea.title || `아이디어 ${i + 1}`}\n${idea.body || ''}`;
+
+        const card = $(`
             <div class="si-idea">
                 <div class="si-idea-head">
                     <span class="si-idea-num">${i + 1}</span>
                     <span class="si-idea-title">${esc(idea.title || `아이디어 ${i + 1}`)}</span>
                 </div>
                 <div class="si-idea-desc">${esc(idea.body || '')}</div>
+                <div class="si-idea-actions">
+                    <button class="si-idea-act si-act-copy" title="클립보드에 복사">📋 복사</button>
+                    <button class="si-idea-act si-act-insert" title="입력창에 삽입">✏️ 삽입</button>
+                </div>
             </div>
         `);
+
+        // 복사 버튼
+        card.find('.si-act-copy').on('click', function () {
+            navigator.clipboard.writeText(fullText).then(() => {
+                toastr.success('클립보드에 복사됨');
+            }).catch(() => {
+                // 폴백
+                const ta = document.createElement('textarea');
+                ta.value = fullText;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                toastr.success('클립보드에 복사됨');
+            });
+        });
+
+        // 입력창 삽입 버튼
+        card.find('.si-act-insert').on('click', function () {
+            const textarea = $('#send_textarea');
+            if (!textarea.length) {
+                toastr.warning('입력창을 찾을 수 없습니다.');
+                return;
+            }
+            const current = textarea.val();
+            const prefix = current ? current + '\n' : '';
+            textarea.val(prefix + fullText);
+            textarea.trigger('input');  // ST에 변경 알림
+            textarea.focus();
+            toastr.success('입력창에 삽입됨');
+        });
+
+        cards.append(card);
     });
     block.append(cards);
 
-    // 채팅 영역 마지막에 삽입
     $('#chat').append(block);
 
-    // 버튼 이벤트
+    // 헤더 버튼 이벤트
     block.find('.si-do-refresh').on('click', async () => {
         if (generating) return;
         const key = chatKey();
@@ -537,7 +463,7 @@ function renderBlock(ideas) {
 
 function showLoading() {
     removeBlock();
-    const block = $('<div id="si-block" class="si-block"></div>');
+    const block = $('<div id="si-block" class="si-block si-block-loading"></div>');
     block.html(`
         <div class="si-loading">
             <div class="si-spin"></div>
