@@ -82,7 +82,6 @@ async function boot() {
     seedDefaultPresets();
     await mountSettingsPanel();
     wireEvents();
-    injectBuiltinCSS();
 
     console.log(`[${EXT_NAME}] Ready.`);
 }
@@ -122,30 +121,6 @@ Consider:
     }
 
     persist();
-}
-
-// CSS를 JS에서 직접 주입 (설정 불필요)
-function injectBuiltinCSS() {
-    if ($('#si-builtin-style').length) return;
-    $('head').append(`<style id="si-builtin-style">
-.si-panel { margin-top:10px;margin-bottom:8px;border-radius:var(--genericRadius,15px);background:var(--SmartThemeBlurTintColor);border:1.5px solid var(--SmartThemeBorderColor);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);font-size:var(--messageTextFontSize,var(--mainFontSize)); }
-.si-bar { background:var(--SmartBotMesBlurTintColor);padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid var(--SmartThemeBorderColor);transition:filter 0.2s ease; }
-.si-bar:hover { filter:brightness(0.95); }
-.si-label { font-weight:bold;font-size:0.9em;color:var(--SmartThemeUnderlineColor);display:flex;align-items:center;gap:6px; }
-.si-arrow { font-size:0.8em;color:var(--SmartThemeQuoteColor);transition:transform 0.3s ease;display:inline-block; }
-.si-arrow.open { transform:rotate(180deg); }
-.si-actions { display:flex;gap:4px; }
-.si-btn { background:transparent;border:1px solid var(--SmartThemeBorderColor);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:0.9em;transition:all 0.2s ease;color:var(--SmartThemeBodyColor); }
-.si-btn:hover { background:var(--SmartThemeQuoteColor);transform:scale(1.05); }
-.si-body { overflow:hidden;max-height:2000px;opacity:1;transition:max-height 0.35s ease-out,opacity 0.35s ease-out; }
-.si-body.hidden { max-height:0;opacity:0; }
-.si-card { padding:10px 12px;border-bottom:1px dashed var(--SmartThemeBorderColor);color:var(--SmartThemeBodyColor);font-size:0.85em;line-height:1.55;word-break:break-word; }
-.si-card:last-child { border-bottom:none; }
-.si-card-title { font-weight:bold;color:var(--SmartThemeUnderlineColor);margin-bottom:4px;font-size:0.95em; }
-.si-card-body { color:var(--SmartThemeQuoteColor); }
-.si-loading { color:var(--SmartThemeBodyColor);opacity:0.6;font-style:italic;padding:12px;text-align:center; }
-.si-fail { color:var(--SmartThemeEmColor);font-style:italic;opacity:0.8;background:var(--black20a);padding:10px 12px; }
-</style>`);
 }
 
 // ─── 설정 패널 ───
