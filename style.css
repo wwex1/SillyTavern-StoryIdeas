@@ -44,30 +44,15 @@
     opacity: 1;
 }
 
-/* 카드 가로 스크롤 */
+/* 카드 세로 리스트 */
 .si-cards {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 6px;
-    -webkit-overflow-scrolling: touch;
-}
-
-.si-cards::-webkit-scrollbar {
-    height: 5px;
-}
-
-.si-cards::-webkit-scrollbar-thumb {
-    background: var(--SmartThemeBorderColor);
-    border-radius: 3px;
 }
 
 /* 개별 카드 */
 .si-idea {
-    flex: 0 0 260px;
-    max-width: 300px;
-    scroll-snap-align: start;
     background: var(--SmartThemeChatTintColor, var(--SmartThemeBlurTintColor));
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 10px;
@@ -75,11 +60,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    transition: box-shadow 0.2s ease;
-}
-
-.si-idea:hover {
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
 }
 
 .si-idea-head {
