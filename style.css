@@ -1,6 +1,5 @@
-/* Story Ideas - 마지막 메시지 하단 카드 블록 */
+/* Story Ideas */
 
-/* 전체 컨테이너 - 채팅 영역 안에 삽입됨 */
 .si-block {
     margin: 12px 0;
     padding: 12px;
@@ -10,7 +9,6 @@
     font-size: var(--messageTextFontSize, var(--mainFontSize));
 }
 
-/* 헤더 */
 .si-block-head {
     display: flex;
     align-items: center;
@@ -51,7 +49,6 @@
     gap: 10px;
 }
 
-/* 개별 카드 */
 .si-idea {
     background: var(--SmartThemeChatTintColor, var(--SmartThemeBlurTintColor));
     border: 1px solid var(--SmartThemeBorderColor);
@@ -96,7 +93,40 @@
     word-break: break-word;
 }
 
+/* 카드 하단 액션 버튼 */
+.si-idea-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    justify-content: flex-end;
+}
+
+.si-idea-act {
+    background: none;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-size: 0.78em;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.7;
+    transition: opacity 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.si-idea-act:hover {
+    opacity: 1;
+    background: var(--SmartThemeBorderColor);
+}
+
 /* 로딩 */
+.si-block-loading {
+    display: flex;
+    justify-content: center;
+}
+
 .si-loading {
     display: flex;
     align-items: center;
