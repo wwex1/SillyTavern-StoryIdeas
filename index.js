@@ -315,7 +315,8 @@ async function generate(isRetry) {
                 renderBlock();
             }
         } else {
-            showError(err.message);
+            // 첫 생성 실패: 안내 블록 표시
+            showFail(err.message);
         }
     } finally {
         generating = false;
@@ -596,18 +597,19 @@ function showLoading() {
     scrollToBlock();
 }
 
-function showError(msg) {
+function showFail(msg) {
     removeBlock();
     const block = $('<div id="si-block" class="si-block"></div>');
     block.html(`
-        <div class="si-err">
-            <div>❌ 생성 실패</div>
-            <div style="margin-top:4px;opacity:0.7;font-size:0.85em;">${esc(msg)}</div>
-            <button class="si-err-retry">🔄 재시도</button>
+        <div class="si-fail">
+            <div class="si-fail-icon">💡</div>
+            <div class="si-fail-msg">추천을 가져오지 못했어요</div>
+            <div class="si-fail-detail">${esc(msg)}</div>
+            <button class="si-fail-retry">다시 시도</button>
         </div>
     `);
     $('#chat').append(block);
-    block.find('.si-err-retry').on('click', () => generate(false));
+    block.find('.si-fail-retry').on('click', () => generate(false));
     scrollToBlock();
 }
 
