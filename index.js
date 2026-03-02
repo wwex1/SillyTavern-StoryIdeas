@@ -64,11 +64,51 @@ async function boot() {
         if (cfg[k] === undefined) cfg[k] = v;
     }
 
-    if (!cfg.promptPresets) cfg.promptPresets = {};
+    // 마이그레이션: 이전 버전 잔존 데이터 정리
+    migrate();
 
     await mountSettings();
     bindEvents();
     console.log(`[${EXT_NAME}] Ready.`);
+}
+
+function migrate() {
+    let changed = false;
+
+    // 이전 버전의 기본 프리셋 제거
+    const oldPresets = ['Default', 'Drama & Conflict', 'Adventure & Exploration', 'Slice of Life'];
+    if (cfg.promptPresets) {
+        for (const name of oldPresets) {
+            if (cfg.promptPresets[name]) {
+                delete cfg.promptPresets[name];
+                changed = true;
+            }
+        }
+    }
+
+    // 이전 버전 기본 프롬프트 → 새 프롬프트로 교체
+    const oldPromptStart = 'Based on the current roleplay context—characters, world-building, and recent conversation—suggest possible next episode';
+    if (cfg.prompt && cfg.prompt.startsWith(oldPromptStart)) {
+        cfg.prompt = INITIAL_PROMPT;
+        changed = true;
+    }
+
+    // 삭제된 설정 키 정리
+    if ('detailLevel' in cfg && cfg.detailLevel === 'detailed') {
+        cfg.detailLevel = 'normal';
+        changed = true;
+    }
+    if ('cssPresets' in cfg) { delete cfg.cssPresets; changed = true; }
+    if ('css' in cfg) { delete cfg.css; changed = true; }
+    if ('itemTemplate' in cfg) { delete cfg.itemTemplate; changed = true; }
+    if ('openDefault' in cfg) { delete cfg.openDefault; changed = true; }
+    if ('maxTokens' in cfg) { delete cfg.maxTokens; changed = true; }
+    if ('historyDepth' in cfg) { delete cfg.historyDepth; changed = true; }
+
+    if (changed) {
+        persist();
+        console.log(`[${EXT_NAME}] Migration completed.`);
+    }
 }
 
 // ─── 설정 패널 ───
