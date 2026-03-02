@@ -29,10 +29,7 @@ const CHOICES_PROMPT = `Based on the current roleplay context, generate possible
 Each option should be a natural continuation that the user's character might say or do next. Randomly vary the format of each option—some should be:
 - Narration/action only (describing what the character does, their body language, inner thoughts)
 - Dialogue only (what the character says)
-- Mixed dialogue and narration (MUST be written as separate paragraphs — dialogue in one paragraph, narration in another, with a blank line between them)
-
-CRITICAL FORMAT RULE for mixed dialogue+narration options:
-Dialogue and narration MUST be in separate paragraphs with a blank line between them. Never combine dialogue and narration in the same paragraph.
+- Mixed dialogue and narration
 
 Keep options diverse in tone and approach—assertive, hesitant, playful, serious, emotional, practical, etc. Each should feel like a meaningfully different choice that would take the story in a different direction.`;
 
@@ -526,9 +523,15 @@ Rules:
 }
 
 function buildChoicesInstruction() {
-    const langNote = (cfg.choicesLang || 'en') === 'ko'
-        ? '⚠️ 모든 선택지를 한국어로 작성하세요.'
-        : '⚠️ Write all choices in English.';
+    const lang = cfg.choicesLang || 'en';
+    let langNote;
+    if (lang === 'ko') {
+        langNote = '⚠️ 모든 선택지를 한국어로 작성하세요.';
+    } else if (lang === 'ko-en') {
+        langNote = '⚠️ 지문(나레이션/행동 묘사)은 한국어로 작성하세요. 대사는 영어로 쓰되 닫는 따옴표 안에 한국어 번역을 괄호로 병기하세요. 예: "I missed you. (보고 싶었어.)"';
+    } else {
+        langNote = '⚠️ Write all choices in English.';
+    }
     const detailMap = {
         brief: 'Keep each choice to 1-3 sentences (brief)',
         normal: 'Write 3-6 sentences per choice (moderate detail)',
@@ -569,7 +572,6 @@ Rules:
 - ${detailMap[cfg.choicesDetail] || detailMap.brief}
 - Each choice starts with [number]
 - Randomly mix: narration only, dialogue only, or dialogue+narration
-- When mixing dialogue and narration, ALWAYS separate them with a blank line (different paragraphs)
 - Write as the user's character would actually speak/act
 - Wrap in <choices>...</choices>
 - NO text outside the tags`;
