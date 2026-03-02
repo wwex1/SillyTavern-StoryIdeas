@@ -75,8 +75,8 @@ async function boot() {
 function migrate() {
     let changed = false;
 
-    // 이전 버전의 기본 프리셋 제거
-    const oldPresets = ['Default', 'Drama & Conflict', 'Adventure & Exploration', 'Slice of Life'];
+    // 이전 버전의 기본 프리셋 제거 (Default는 유지)
+    const oldPresets = ['Drama & Conflict', 'Adventure & Exploration', 'Slice of Life'];
     if (cfg.promptPresets) {
         for (const name of oldPresets) {
             if (cfg.promptPresets[name]) {
