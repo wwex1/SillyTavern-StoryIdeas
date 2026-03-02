@@ -137,12 +137,35 @@ async function mountSettings() {
     sourceSelect.append('<option value="main">Main API</option>');
 
     try {
-        const profiles = ctx.ConnectionManagerRequestService?.getConnectionProfiles?.()
-            || ctx.ConnectionManagerRequestService?.getAllProfiles?.()
-            || [];
+        const cmrs = ctx.ConnectionManagerRequestService;
+        let profiles = [];
+
+        // 여러 방식으로 프로필 목록 시도
+        if (cmrs) {
+            if (typeof cmrs.getConnectionProfiles === 'function') {
+                profiles = cmrs.getConnectionProfiles() || [];
+            } else if (typeof cmrs.getAllProfiles === 'function') {
+                profiles = cmrs.getAllProfiles() || [];
+            } else if (typeof cmrs.getProfiles === 'function') {
+                profiles = cmrs.getProfiles() || [];
+            }
+
+            // 위 방법 실패 시 settings에서 직접 가져오기
+            if (!profiles.length) {
+                const s = ctx.extensionSettings?.connectionManager?.profiles
+                    || ctx.extensionSettings?.ConnectionManager?.profiles;
+                if (Array.isArray(s)) profiles = s;
+                else if (s && typeof s === 'object') profiles = Object.values(s);
+            }
+        }
+
+        console.log(`[${EXT_NAME}] 프로필 ${profiles.length}개 발견`);
+
         if (profiles.length) {
             profiles.forEach(p => {
-                sourceSelect.append(`<option value="profile:${p.id}">${p.name || p.id}</option>`);
+                const id = p.id || p.profileId || '';
+                const name = p.name || p.profileName || id;
+                if (id) sourceSelect.append(`<option value="profile:${id}">${name}</option>`);
             });
         }
     } catch (e) {
