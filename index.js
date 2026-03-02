@@ -652,11 +652,15 @@ function showFail(msg) {
             <div class="si-fail-icon">💡</div>
             <div class="si-fail-msg">추천을 가져오지 못했어요</div>
             <div class="si-fail-detail">${esc(msg)}</div>
-            <button class="si-fail-retry">다시 시도</button>
+            <div class="si-fail-btns">
+                <button class="si-fail-retry">다시 시도</button>
+                <button class="si-fail-dismiss">닫기</button>
+            </div>
         </div>
     `);
     $('#chat').append(block);
     block.find('.si-fail-retry').on('click', () => generate(false));
+    block.find('.si-fail-dismiss').on('click', () => removeBlock());
     scrollToBlock();
 }
 
