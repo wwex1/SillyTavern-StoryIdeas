@@ -5,6 +5,8 @@
     padding: 12px;
     border-radius: 12px;
     background: transparent;
+    width: 100%;
+    box-sizing: border-box;
     font-size: var(--messageTextFontSize, var(--mainFontSize));
 }
 
@@ -79,6 +81,10 @@
 }
 
 /* 카드 세로 리스트 */
+#si-cards-area {
+    width: 100%;
+}
+
 .si-cards {
     display: flex;
     flex-direction: column;
