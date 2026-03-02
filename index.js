@@ -33,6 +33,8 @@ Each option should be a natural continuation that the user's character might say
 
 The format order must be randomized every time—do NOT follow a fixed pattern like "narration, dialogue, mixed" or any predictable sequence. Any format can appear multiple times or not at all.
 
+IMPORTANT: Each choice must be ONE single continuous response. Do NOT split dialogue into multiple separate quoted lines. If a character speaks, write it as one continuous speech in a single set of quotation marks, not broken into separate quotes.
+
 Keep options diverse in tone and approach—assertive, hesitant, playful, serious, emotional, practical, etc. Each should feel like a meaningfully different choice that would take the story in a different direction.`;
 
 const DEFAULTS = {
@@ -383,7 +385,26 @@ function bindEvents() {
         obs.observe(document.body, { childList: true, subtree: true });
     }
 
-    ctx.eventSource.on(event_types.CHAT_CHANGED, () => removeBlock());
+    ctx.eventSource.on(event_types.CHAT_CHANGED, () => {
+        removeBlock();
+        // 채팅방 전환 후 캐시 있으면 자동 복원
+        setTimeout(() => {
+            if (!cfg.enabled) return;
+            // 마지막으로 본 모드 우선, 아니면 둘 다 확인
+            const ideasCache = getCache('ideas');
+            const choicesCache = getCache('choices');
+
+            if (activeMode === 'choices' && choicesCache && choicesCache.history.length > 0) {
+                renderBlock('choices');
+            } else if (ideasCache && ideasCache.history.length > 0) {
+                activeMode = 'ideas';
+                renderBlock('ideas');
+            } else if (choicesCache && choicesCache.history.length > 0) {
+                activeMode = 'choices';
+                renderBlock('choices');
+            }
+        }, 500);
+    });
 }
 
 // ─── 블록 ───
