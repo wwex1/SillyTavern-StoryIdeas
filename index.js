@@ -8,7 +8,7 @@ import { getCurrentChatId, user_avatar } from '../../../../script.js';
 import { power_user } from '../../../power-user.js';
 import { getWorldInfoPrompt } from '../../../world-info.js';
 
-const EXT_NAME = 'SillyTavern-StoryIdeas';
+const EXT_NAME = 'st-StoryIdeas';
 
 const INITIAL_PROMPT = `Based on the current roleplay context, suggest diverse episode ideas that could naturally follow from the story so far.
 
