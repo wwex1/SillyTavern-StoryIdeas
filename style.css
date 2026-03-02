@@ -233,7 +233,7 @@
     word-break: break-word;
 }
 
-.si-fail-retry {
+.si-fail-retry, .si-fail-dismiss {
     margin-top: 4px;
     padding: 6px 16px;
     border: 1px solid var(--SmartThemeBorderColor);
@@ -245,6 +245,11 @@
     transition: background 0.15s;
 }
 
-.si-fail-retry:hover {
+.si-fail-retry:hover, .si-fail-dismiss:hover {
     background: var(--SmartThemeBorderColor);
+}
+
+.si-fail-btns {
+    display: flex;
+    gap: 8px;
 }
