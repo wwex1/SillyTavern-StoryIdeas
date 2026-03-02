@@ -131,17 +131,41 @@ async function mountSettings() {
         toastr.info(cfg.enabled ? 'Story Ideas 활성화됨' : 'Story Ideas 비활성화됨');
     });
 
-    root.find('.si_source').val(cfg.apiSource).on('change', function () {
-        cfg.apiSource = $(this).val(); persist();
-        $('#si_profile_area').toggle(cfg.apiSource === 'profile');
-    });
-    $('#si_profile_area').toggle(cfg.apiSource === 'profile');
+    // 통합 API 소스 드롭다운 (Main API + Connection Profiles)
+    const sourceSelect = root.find('.si_source');
+    sourceSelect.empty();
+    sourceSelect.append('<option value="main">Main API</option>');
 
-    ctx.ConnectionManagerRequestService.handleDropdown(
-        '.story_ideas_settings .si_connection_profile',
-        cfg.connectionProfileId,
-        (p) => { cfg.connectionProfileId = p?.id ?? ''; persist(); },
-    );
+    try {
+        const profiles = ctx.ConnectionManagerRequestService?.getConnectionProfiles?.()
+            || ctx.ConnectionManagerRequestService?.getAllProfiles?.()
+            || [];
+        if (profiles.length) {
+            profiles.forEach(p => {
+                sourceSelect.append(`<option value="profile:${p.id}">${p.name || p.id}</option>`);
+            });
+        }
+    } catch (e) {
+        console.log(`[${EXT_NAME}] 프로필 목록 로드 실패:`, e);
+    }
+
+    // 현재 값 복원
+    const currentVal = cfg.apiSource === 'profile' && cfg.connectionProfileId
+        ? `profile:${cfg.connectionProfileId}`
+        : 'main';
+    sourceSelect.val(currentVal);
+
+    sourceSelect.on('change', function () {
+        const val = $(this).val();
+        if (val === 'main') {
+            cfg.apiSource = 'main';
+            cfg.connectionProfileId = '';
+        } else {
+            cfg.apiSource = 'profile';
+            cfg.connectionProfileId = val.replace('profile:', '');
+        }
+        persist();
+    });
 
     root.find('.si_count').val(cfg.count).on('change', function () { cfg.count = Number($(this).val()); persist(); });
     root.find('.si_detail_level').val(cfg.detailLevel).on('change', function () { cfg.detailLevel = $(this).val(); persist(); });
