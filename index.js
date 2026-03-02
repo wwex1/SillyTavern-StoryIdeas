@@ -37,7 +37,7 @@ IMPORTANT: Each choice must be ONE single continuous response. Do NOT split dial
 
 Keep options diverse in tone and approach—assertive, hesitant, playful, serious, emotional, practical, etc. Each should feel like a meaningfully different choice that would take the story in a different direction, while still feeling true to who the character is.
 
-Write narration in literary past tense style (e.g. ~했다, ~였다, ~거렸다). Do NOT use formal polite endings like ~했습니다, ~였습니다, ~됩니다 in narration.`;
+Write narration in third-person past tense (e.g. ~했다, ~였다). Never use ~했습니다/~였습니다 style in narration.`;
 
 const DEFAULTS = {
     enabled: true,
