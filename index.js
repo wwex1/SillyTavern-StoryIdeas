@@ -551,7 +551,7 @@ function buildChoicesInstruction() {
     if (lang === 'ko') {
         langNote = '⚠️ 모든 선택지를 한국어로 작성하세요.';
     } else if (lang === 'ko-en') {
-        langNote = '⚠️ 지문(나레이션/행동 묘사)은 한국어로 작성하세요. 대사는 영어로 쓰되 닫는 따옴표 안에 한국어 번역을 괄호로 병기하세요. 예: "I missed you. (보고 싶었어.)"';
+        langNote = '⚠️ 지문(나레이션/행동 묘사)은 한국어로 작성하세요. 대사는 영어 전체를 먼저 쓰고, 그 뒤에 한국어 번역 전체를 괄호로 한 번만 병기하세요. 문장마다 끊어서 번역하지 마세요. 예: "I missed you. Where have you been all this time? (보고 싶었어. 그동안 어디 있었던 거야?)"';
     } else {
         langNote = '⚠️ Write all choices in English.';
     }
