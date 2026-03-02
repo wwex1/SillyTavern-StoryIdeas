@@ -9,6 +9,7 @@
     font-size: var(--messageTextFontSize, var(--mainFontSize));
 }
 
+/* 헤더 */
 .si-block-head {
     display: flex;
     align-items: center;
@@ -25,6 +26,7 @@
 .si-block-btns {
     display: flex;
     gap: 6px;
+    align-items: center;
 }
 
 .si-block-btn {
@@ -40,6 +42,41 @@
 
 .si-block-btn:hover {
     opacity: 1;
+}
+
+/* 네비게이션 (◀ 1/3 ▶) */
+.si-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8em;
+    color: var(--SmartThemeQuoteColor);
+}
+
+.si-nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85em;
+    padding: 2px 6px;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.si-nav-btn:hover {
+    opacity: 1;
+}
+
+.si-nav-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+}
+
+.si-nav-label {
+    min-width: 30px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 /* 카드 세로 리스트 */
@@ -93,7 +130,6 @@
     word-break: break-word;
 }
 
-/* 카드 하단 액션 버튼 */
 .si-idea-actions {
     display: flex;
     gap: 6px;
@@ -171,4 +207,15 @@
 
 .si-err button:hover {
     background: var(--SmartThemeQuoteColor);
+}
+
+/* 재생성 중 오버레이 */
+.si-regen-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.6;
 }
