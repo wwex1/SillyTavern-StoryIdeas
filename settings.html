@@ -7,9 +7,9 @@
         <div class="inline-drawer-content">
 
             <div class="flex-container">
-                <label class="checkbox_label flexBasis25p" for="si_enabled">
+                <label class="checkbox_label flex1" for="si_enabled">
                     <input type="checkbox" id="si_enabled" class="si_enabled" />
-                    <span>활성화</span>
+                    <span>전체 활성화</span>
                 </label>
                 <select id="si_source" class="si_source text_pole flex1"></select>
             </div>
@@ -17,102 +17,89 @@
             <hr />
 
             <!-- 에피소드 추천 -->
-            <div class="inline-drawer">
-                <div class="inline-drawer-toggle inline-drawer-header">
-                    <b>💡 에피소드 추천</b>
-                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                </div>
-                <div class="inline-drawer-content">
-                    <label class="checkbox_label" style="margin-bottom:6px;">
-                        <input type="checkbox" class="si_ideas_enabled" />
-                        <span>에피소드 추천 활성화</span>
-                    </label>
-                    <div class="flex-container">
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>개수</small>
-                            <input type="number" class="si_count text_pole" min="1" max="8" value="3" />
-                        </div>
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>길이</small>
-                            <select class="si_detail_level text_pole">
-                                <option value="brief">간략</option>
-                                <option value="normal">보통</option>
-                            </select>
-                        </div>
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>언어</small>
-                            <select class="si_lang text_pole">
-                                <option value="en">EN</option>
-                                <option value="ko">KO</option>
-                            </select>
-                        </div>
-                    </div>
+            <label class="checkbox_label" style="margin-bottom:6px;">
+                <input type="checkbox" class="si_ideas_enabled" />
+                <span><b>💡 에피소드 추천</b></span>
+            </label>
 
-                    <div class="flex-container flexFlowColumn">
-                        <div class="flex-container">
-                            <small class="flex1">프롬프트 저장</small>
-                            <select class="si_prompt_preset text_pole flex1"></select>
-                            <button class="si_preset_load menu_button fa-solid fa-folder-open" title="불러오기"></button>
-                            <button class="si_preset_save menu_button fa-solid fa-floppy-disk" title="저장"></button>
-                            <button class="si_preset_del menu_button fa-solid fa-trash" title="삭제"></button>
-                        </div>
-                        <textarea class="si_prompt text_pole" rows="5" placeholder="에피소드 추천 프롬프트..."></textarea>
-                        <div class="flex-container flexFlowRowReverse" style="gap:6px;">
-                            <button class="si_cache_clear menu_button">캐시 초기화</button>
-                            <button class="si_prompt_reset menu_button">설정 초기화</button>
-                        </div>
-                    </div>
+            <div class="flex-container">
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>개수</small>
+                    <input type="number" class="si_count text_pole" min="1" max="8" value="3" />
+                </div>
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>길이</small>
+                    <select class="si_detail_level text_pole">
+                        <option value="brief">간략</option>
+                        <option value="normal">보통</option>
+                    </select>
+                </div>
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>언어</small>
+                    <select class="si_lang text_pole">
+                        <option value="en">EN</option>
+                        <option value="ko">KO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-container flexFlowColumn">
+                <div class="flex-container">
+                    <small class="flex1">프롬프트 저장</small>
+                    <select class="si_prompt_preset text_pole flex1"></select>
+                    <button class="si_preset_load menu_button fa-solid fa-folder-open" title="불러오기"></button>
+                    <button class="si_preset_save menu_button fa-solid fa-floppy-disk" title="저장"></button>
+                    <button class="si_preset_del menu_button fa-solid fa-trash" title="삭제"></button>
+                </div>
+                <textarea class="si_prompt text_pole" rows="5" placeholder="에피소드 추천 프롬프트..."></textarea>
+                <div class="flex-container flexFlowRowReverse" style="gap:6px;">
+                    <button class="si_cache_clear menu_button">캐시 초기화</button>
+                    <button class="si_prompt_reset menu_button">설정 초기화</button>
                 </div>
             </div>
 
             <hr />
 
             <!-- 선택지 생성 -->
-            <div class="inline-drawer">
-                <div class="inline-drawer-toggle inline-drawer-header">
-                    <b>🎯 선택지 생성</b>
-                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                </div>
-                <div class="inline-drawer-content">
-                    <label class="checkbox_label" style="margin-bottom:6px;">
-                        <input type="checkbox" class="sc_choices_enabled" />
-                        <span>선택지 생성 활성화</span>
-                    </label>
-                    <div class="flex-container">
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>개수</small>
-                            <input type="number" class="sc_count text_pole" min="1" max="8" value="3" />
-                        </div>
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>길이</small>
-                            <select class="sc_detail_level text_pole">
-                                <option value="brief">간략</option>
-                                <option value="normal">보통</option>
-                            </select>
-                        </div>
-                        <div class="flex-container flexFlowColumn flex1">
-                            <small>언어</small>
-                            <select class="sc_lang text_pole">
-                                <option value="en">EN</option>
-                                <option value="ko">KO</option>
-                            </select>
-                        </div>
-                    </div>
+            <label class="checkbox_label" style="margin-bottom:6px;">
+                <input type="checkbox" class="sc_choices_enabled" />
+                <span><b>🎯 선택지 생성</b></span>
+            </label>
 
-                    <div class="flex-container flexFlowColumn">
-                        <div class="flex-container">
-                            <small class="flex1">프롬프트 저장</small>
-                            <select class="sc_prompt_preset text_pole flex1"></select>
-                            <button class="sc_preset_load menu_button fa-solid fa-folder-open" title="불러오기"></button>
-                            <button class="sc_preset_save menu_button fa-solid fa-floppy-disk" title="저장"></button>
-                            <button class="sc_preset_del menu_button fa-solid fa-trash" title="삭제"></button>
-                        </div>
-                        <textarea class="sc_prompt text_pole" rows="5" placeholder="선택지 생성 프롬프트..."></textarea>
-                        <div class="flex-container flexFlowRowReverse" style="gap:6px;">
-                            <button class="sc_cache_clear menu_button">캐시 초기화</button>
-                            <button class="sc_prompt_reset menu_button">설정 초기화</button>
-                        </div>
-                    </div>
+            <div class="flex-container">
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>개수</small>
+                    <input type="number" class="sc_count text_pole" min="1" max="8" value="3" />
+                </div>
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>길이</small>
+                    <select class="sc_detail_level text_pole">
+                        <option value="brief">간략</option>
+                        <option value="normal">보통</option>
+                    </select>
+                </div>
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>언어</small>
+                    <select class="sc_lang text_pole">
+                        <option value="en">EN</option>
+                        <option value="ko">KO</option>
+                        <option value="ko-en">KO (대사 한영병기)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-container flexFlowColumn">
+                <div class="flex-container">
+                    <small class="flex1">프롬프트 저장</small>
+                    <select class="sc_prompt_preset text_pole flex1"></select>
+                    <button class="sc_preset_load menu_button fa-solid fa-folder-open" title="불러오기"></button>
+                    <button class="sc_preset_save menu_button fa-solid fa-floppy-disk" title="저장"></button>
+                    <button class="sc_preset_del menu_button fa-solid fa-trash" title="삭제"></button>
+                </div>
+                <textarea class="sc_prompt text_pole" rows="5" placeholder="선택지 생성 프롬프트..."></textarea>
+                <div class="flex-container flexFlowRowReverse" style="gap:6px;">
+                    <button class="sc_cache_clear menu_button">캐시 초기화</button>
+                    <button class="sc_prompt_reset menu_button">설정 초기화</button>
                 </div>
             </div>
 
