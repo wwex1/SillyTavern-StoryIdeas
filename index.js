@@ -1,6 +1,6 @@
 /**
  * Story Ideas - Episode Suggestion Extension for SillyTavern
- * 마지막 메시지 아래에 에피소드 추천 카드 표시
+ * 마지막 메시지 아래에 에피소드 추천 카드 + 스와이프 히스토리
  */
 
 import { event_types } from '../../../events.js';
@@ -33,6 +33,7 @@ const DEFAULTS = {
     lang: 'en',
     prompt: INITIAL_PROMPT,
     promptPresets: {},
+    // cache: { chatId: { history: [ [ideas], [ideas], ... ], viewIdx: 0 } }
     cache: {},
 };
 
@@ -50,6 +51,20 @@ function esc(str) {
 
 function chatKey() { return getCurrentChatId() || null; }
 
+function getCache() {
+    const key = chatKey();
+    if (!key) return null;
+    if (!cfg.cache[key]) cfg.cache[key] = { history: [], viewIdx: -1 };
+    // 마이그레이션: 이전 형식(ideas 단일) → 히스토리 형식
+    if (cfg.cache[key].ideas && !cfg.cache[key].history) {
+        cfg.cache[key] = { history: [cfg.cache[key].ideas], viewIdx: 0 };
+        delete cfg.cache[key].ideas;
+        delete cfg.cache[key].ts;
+        persist();
+    }
+    return cfg.cache[key];
+}
+
 // ─── 부팅 ───
 
 async function boot() {
@@ -64,9 +79,7 @@ async function boot() {
         if (cfg[k] === undefined) cfg[k] = v;
     }
 
-    // 마이그레이션: 이전 버전 잔존 데이터 정리
     migrate();
-
     await mountSettings();
     bindEvents();
     console.log(`[${EXT_NAME}] Ready.`);
@@ -75,50 +88,33 @@ async function boot() {
 function migrate() {
     let changed = false;
 
-    // 이전 버전의 기본 프리셋 제거 (Default는 유지)
     const oldPresets = ['Drama & Conflict', 'Adventure & Exploration', 'Slice of Life'];
     if (cfg.promptPresets) {
         for (const name of oldPresets) {
-            if (cfg.promptPresets[name]) {
-                delete cfg.promptPresets[name];
-                changed = true;
-            }
+            if (cfg.promptPresets[name]) { delete cfg.promptPresets[name]; changed = true; }
         }
-        // Default 프리셋 내용도 새 프롬프트로 업데이트
         if (cfg.promptPresets['Default'] && cfg.promptPresets['Default'].startsWith('Based on the current roleplay context')) {
             cfg.promptPresets['Default'] = INITIAL_PROMPT;
             changed = true;
         }
     }
-    // promptPresets가 없으면 Default 하나 생성
     if (!cfg.promptPresets || Object.keys(cfg.promptPresets).length === 0) {
         cfg.promptPresets = { 'Default': INITIAL_PROMPT };
         changed = true;
     }
 
-    // 이전 버전 기본 프롬프트 → 새 프롬프트로 교체
     const oldPromptStart = 'Based on the current roleplay context—characters, world-building, and recent conversation—suggest possible next episode';
     if (cfg.prompt && cfg.prompt.startsWith(oldPromptStart)) {
         cfg.prompt = INITIAL_PROMPT;
         changed = true;
     }
 
-    // 삭제된 설정 키 정리
-    if ('detailLevel' in cfg && cfg.detailLevel === 'detailed') {
-        cfg.detailLevel = 'normal';
-        changed = true;
+    for (const k of ['cssPresets', 'css', 'itemTemplate', 'openDefault', 'maxTokens', 'historyDepth']) {
+        if (k in cfg) { delete cfg[k]; changed = true; }
     }
-    if ('cssPresets' in cfg) { delete cfg.cssPresets; changed = true; }
-    if ('css' in cfg) { delete cfg.css; changed = true; }
-    if ('itemTemplate' in cfg) { delete cfg.itemTemplate; changed = true; }
-    if ('openDefault' in cfg) { delete cfg.openDefault; changed = true; }
-    if ('maxTokens' in cfg) { delete cfg.maxTokens; changed = true; }
-    if ('historyDepth' in cfg) { delete cfg.historyDepth; changed = true; }
+    if (cfg.detailLevel === 'detailed') { cfg.detailLevel = 'normal'; changed = true; }
 
-    if (changed) {
-        persist();
-        console.log(`[${EXT_NAME}] Migration completed.`);
-    }
+    if (changed) { persist(); console.log(`[${EXT_NAME}] Migration done.`); }
 }
 
 // ─── 설정 패널 ───
@@ -129,16 +125,14 @@ async function mountSettings() {
     const root = $('.story_ideas_settings');
 
     root.find('.si_enabled').prop('checked', cfg.enabled).on('change', function () {
-        cfg.enabled = $(this).prop('checked');
-        persist();
+        cfg.enabled = $(this).prop('checked'); persist();
         const btn = document.getElementById('si_menu_btn');
         if (btn) btn.style.display = cfg.enabled ? '' : 'none';
         toastr.info(cfg.enabled ? 'Story Ideas 활성화됨' : 'Story Ideas 비활성화됨');
     });
 
     root.find('.si_source').val(cfg.apiSource).on('change', function () {
-        cfg.apiSource = $(this).val();
-        persist();
+        cfg.apiSource = $(this).val(); persist();
         $('#si_profile_area').toggle(cfg.apiSource === 'profile');
     });
     $('#si_profile_area').toggle(cfg.apiSource === 'profile');
@@ -149,32 +143,19 @@ async function mountSettings() {
         (p) => { cfg.connectionProfileId = p?.id ?? ''; persist(); },
     );
 
-    root.find('.si_count').val(cfg.count).on('change', function () {
-        cfg.count = Number($(this).val()); persist();
-    });
+    root.find('.si_count').val(cfg.count).on('change', function () { cfg.count = Number($(this).val()); persist(); });
+    root.find('.si_detail_level').val(cfg.detailLevel).on('change', function () { cfg.detailLevel = $(this).val(); persist(); });
+    root.find('.si_lang').val(cfg.lang).on('change', function () { cfg.lang = $(this).val(); persist(); });
 
-    root.find('.si_detail_level').val(cfg.detailLevel).on('change', function () {
-        cfg.detailLevel = $(this).val(); persist();
-    });
-
-    root.find('.si_lang').val(cfg.lang).on('change', function () {
-        cfg.lang = $(this).val(); persist();
-    });
-
-    root.find('.si_prompt').val(cfg.prompt).on('change', function () {
-        cfg.prompt = $(this).val(); persist();
-    });
-
+    root.find('.si_prompt').val(cfg.prompt).on('change', function () { cfg.prompt = $(this).val(); persist(); });
     root.find('.si_prompt_reset').on('click', async function () {
         if (await ctx.Popup.show.confirm('기본 프롬프트로 복원할까요?', '초기화')) {
             cfg.prompt = INITIAL_PROMPT;
             root.find('.si_prompt').val(INITIAL_PROMPT);
-            persist();
-            toastr.success('프롬프트 초기화됨');
+            persist(); toastr.success('프롬프트 초기화됨');
         }
     });
 
-    // 프리셋
     mountPresetUI(root);
 }
 
@@ -190,8 +171,7 @@ function mountPresetUI(root) {
         const n = sel.val();
         if (!n || !cfg.promptPresets[n]) return;
         cfg.prompt = cfg.promptPresets[n];
-        root.find('.si_prompt').val(cfg.prompt);
-        persist();
+        root.find('.si_prompt').val(cfg.prompt); persist();
         toastr.success(`"${n}" 적용됨`);
     });
 
@@ -209,8 +189,7 @@ function mountPresetUI(root) {
         const n = sel.val();
         if (!n) return toastr.warning('프리셋을 선택하세요.');
         if (await ctx.Popup.show.confirm(`"${n}" 삭제?`, '삭제')) {
-            delete cfg.promptPresets[n];
-            persist(); refresh();
+            delete cfg.promptPresets[n]; persist(); refresh();
             toastr.success(`"${n}" 삭제됨`);
         }
     });
@@ -230,13 +209,13 @@ function bindEvents() {
         if (!cfg.enabled || generating) return;
         $('#extensionsMenu').hide();
 
-        const key = chatKey();
-        if (key && cfg.cache[key]?.ideas?.length) {
-            renderBlock(cfg.cache[key].ideas);
+        const cache = getCache();
+        if (cache && cache.history.length > 0) {
+            renderBlock();
             scrollToBlock();
             return;
         }
-        await generate();
+        await generate(false);
     });
 
     const extMenu = document.getElementById('extensionsMenu');
@@ -264,22 +243,27 @@ function scrollToBlock() {
 
 // ─── 생성 ───
 
-async function generate(isRetry = false) {
+async function generate(isRetry) {
     if (generating || !cfg.enabled) return;
 
     if (cfg.apiSource === 'profile' && !cfg.connectionProfileId) {
-        toastr.warning('Connection Profile을 선택하세요.');
-        return;
+        toastr.warning('Connection Profile을 선택하세요.'); return;
     }
     if (!ctx.chat?.length) { toastr.warning('대화 내역이 없습니다.'); return; }
-
     const lastBot = findLastBot();
     if (lastBot === -1) { toastr.warning('봇 메시지가 없습니다.'); return; }
 
     generating = true;
 
-    // 첫 생성이면 로딩 표시, 재시도면 기존 블록 유지
-    if (!isRetry) {
+    if (isRetry) {
+        // 재생성: 카드 영역만 로딩으로 교체
+        $('#si-cards-area').html(`
+            <div class="si-regen-overlay">
+                <div class="si-spin"></div>
+                <span>재생성 중...</span>
+            </div>
+        `);
+    } else {
         showLoading();
     }
 
@@ -311,17 +295,26 @@ async function generate(isRetry = false) {
         const ideas = parseIdeas(raw);
         if (!ideas?.length) throw new Error('파싱 실패');
 
-        const key = chatKey();
-        if (key) { cfg.cache[key] = { ideas, ts: Date.now() }; persist(); }
+        // 히스토리에 추가
+        const cache = getCache();
+        cache.history.push(ideas);
+        cache.viewIdx = cache.history.length - 1;
+        persist();
 
-        renderBlock(ideas);
+        renderBlock();
         scrollToBlock();
 
     } catch (err) {
         console.error(`[${EXT_NAME}]`, err);
         toastr.error(`추천 생성 실패: ${err.message}`);
-        // 재시도 실패 시 기존 블록 유지, 첫 생성 실패 시만 에러 표시
-        if (!isRetry) {
+
+        if (isRetry) {
+            // 재생성 실패: 이전 페이지로 복원
+            const cache = getCache();
+            if (cache && cache.history.length > 0) {
+                renderBlock();
+            }
+        } else {
             showError(err.message);
         }
     } finally {
@@ -335,12 +328,10 @@ function buildInstruction() {
     const langNote = (cfg.lang || 'en') === 'ko'
         ? '⚠️ 모든 추천을 한국어로 작성하세요.'
         : '⚠️ Write all suggestions in English.';
-
     const detailMap = {
         brief: 'Keep each description to 1-2 sentences (brief and concise)',
         normal: 'Write 3-5 sentences per description (moderate detail)',
     };
-    const detailNote = detailMap[cfg.detailLevel] || detailMap.brief;
 
     return `${ctx.substituteParams(cfg.prompt)}
 
@@ -357,7 +348,7 @@ Description here.
 
 Rules:
 - Exactly ${cfg.count} suggestions
-- ${detailNote}
+- ${detailMap[cfg.detailLevel] || detailMap.brief}
 - Title in [brackets], description on next lines
 - Wrap in <suggestions>...</suggestions>
 - NO text outside the tags`;
@@ -490,23 +481,54 @@ function parseIdeas(content) {
 
 // ─── 렌더링 ───
 
-function renderBlock(ideas) {
+function renderBlock() {
     removeBlock();
+    const cache = getCache();
+    if (!cache || cache.history.length === 0) return;
+
+    const total = cache.history.length;
+    const idx = cache.viewIdx;
+    const ideas = cache.history[idx];
 
     const block = $('<div id="si-block" class="si-block"></div>');
 
+    // 헤더: 타이틀 + 네비 + 버튼
     const head = $('<div class="si-block-head"></div>');
     head.append('<span class="si-block-title">💡 에피소드 추천</span>');
-    const btns = $('<div class="si-block-btns"></div>');
-    btns.append('<button class="si-block-btn si-do-refresh" title="새로 생성">🔄</button>');
-    btns.append('<button class="si-block-btn si-do-delete" title="삭제">🗑️</button>');
-    head.append(btns);
+
+    const right = $('<div class="si-block-btns"></div>');
+
+    // 네비게이션 ◀ 1/3 ▶
+    const nav = $('<div class="si-nav"></div>');
+    const prevBtn = $(`<button class="si-nav-btn" title="이전">◀</button>`);
+    const navLabel = $(`<span class="si-nav-label">${idx + 1}/${total}</span>`);
+    const nextBtn = $(`<button class="si-nav-btn" title="다음">▶</button>`);
+
+    if (idx <= 0) prevBtn.prop('disabled', true);
+    if (idx >= total - 1) nextBtn.prop('disabled', true);
+
+    prevBtn.on('click', () => {
+        if (cache.viewIdx > 0) { cache.viewIdx--; persist(); renderBlock(); }
+    });
+    nextBtn.on('click', () => {
+        if (cache.viewIdx < cache.history.length - 1) { cache.viewIdx++; persist(); renderBlock(); }
+    });
+
+    nav.append(prevBtn, navLabel, nextBtn);
+    right.append(nav);
+
+    right.append('<button class="si-block-btn si-do-refresh" title="새로 생성">🔄</button>');
+    right.append('<button class="si-block-btn si-do-delete" title="전체 삭제">🗑️</button>');
+
+    head.append(right);
     block.append(head);
 
+    // 카드 영역
+    const cardsWrap = $('<div id="si-cards-area"></div>');
     const cards = $('<div class="si-cards"></div>');
+
     ideas.forEach((idea, i) => {
         const bodyText = idea.body || '';
-
         const card = $(`
             <div class="si-idea">
                 <div class="si-idea-head">
@@ -521,50 +543,43 @@ function renderBlock(ideas) {
             </div>
         `);
 
-        card.find('.si-act-copy').on('click', function () {
-            navigator.clipboard.writeText(bodyText).then(() => {
-                toastr.success('복사됨');
-            }).catch(() => {
+        card.find('.si-act-copy').on('click', () => {
+            navigator.clipboard.writeText(bodyText).then(() => toastr.success('복사됨')).catch(() => {
                 const ta = document.createElement('textarea');
-                ta.value = bodyText;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                toastr.success('복사됨');
+                ta.value = bodyText; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy');
+                document.body.removeChild(ta); toastr.success('복사됨');
             });
         });
 
-        card.find('.si-act-insert').on('click', function () {
+        card.find('.si-act-insert').on('click', () => {
             const textarea = $('#send_textarea');
             if (!textarea.length) { toastr.warning('입력창을 찾을 수 없습니다.'); return; }
-            const current = textarea.val();
-            textarea.val(current ? current + '\n' + bodyText : bodyText);
-            textarea.trigger('input');
-            textarea.focus();
+            const cur = textarea.val();
+            textarea.val(cur ? cur + '\n' + bodyText : bodyText);
+            textarea.trigger('input'); textarea.focus();
             toastr.success('입력창에 삽입됨');
         });
 
         cards.append(card);
     });
-    block.append(cards);
+
+    cardsWrap.append(cards);
+    block.append(cardsWrap);
     $('#chat').append(block);
 
-    block.find('.si-do-refresh').on('click', async function () {
+    // 재생성
+    block.find('.si-do-refresh').on('click', async () => {
         if (generating) return;
-        const btn = $(this);
-        btn.text('⏳').css('pointer-events', 'none');
-        const key = chatKey();
-        if (key && cfg.cache[key]) { delete cfg.cache[key]; persist(); }
         await generate(true);
-        btn.text('🔄').css('pointer-events', 'auto');
     });
 
+    // 전체 삭제
     block.find('.si-do-delete').on('click', () => {
         const key = chatKey();
         if (key && cfg.cache[key]) { delete cfg.cache[key]; persist(); }
         removeBlock();
-        toastr.success('추천 삭제됨');
+        toastr.success('추천 전체 삭제됨');
     });
 }
 
@@ -592,7 +607,7 @@ function showError(msg) {
         </div>
     `);
     $('#chat').append(block);
-    block.find('.si-err-retry').on('click', () => generate(true));
+    block.find('.si-err-retry').on('click', () => generate(false));
     scrollToBlock();
 }
 
