@@ -14,6 +14,10 @@
                 <select id="si_source" class="si_source text_pole flex1"></select>
             </div>
 
+            <div class="flex-container flexFlowRowReverse" style="margin-top:6px;">
+                <button class="si_all_cache_clear menu_button">🗑️ 전체 캐시 초기화</button>
+            </div>
+
             <hr />
 
             <!-- 에피소드 추천 -->
@@ -101,6 +105,35 @@
                     <button class="sc_cache_clear menu_button">캐시 초기화</button>
                     <button class="sc_prompt_reset menu_button">설정 초기화</button>
                 </div>
+            </div>
+
+            <hr />
+
+            <!-- 페르소나 생성 -->
+            <label class="checkbox_label" style="margin-bottom:6px;">
+                <input type="checkbox" class="sp_persona_enabled" />
+                <span><b>👤 페르소나 생성</b></span>
+            </label>
+
+            <div class="flex-container">
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>출력 언어</small>
+                    <select class="sp_lang text_pole">
+                        <option value="en">EN</option>
+                        <option value="ko">KO</option>
+                    </select>
+                </div>
+                <div class="flex-container flexFlowColumn flex1">
+                    <small>출력 길이</small>
+                    <select class="sp_detail text_pole">
+                        <option value="brief">간략</option>
+                        <option value="normal">보통</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-container flexFlowRowReverse" style="margin-top:6px;">
+                <button class="sp_cache_clear menu_button">캐시 초기화</button>
             </div>
 
         </div>
