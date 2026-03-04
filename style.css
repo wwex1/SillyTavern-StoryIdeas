@@ -355,6 +355,22 @@
     white-space: pre-wrap;
 }
 
+textarea.pg-result-editable {
+    width: 100%;
+    min-height: 150px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 0.85em;
+    color: var(--SmartThemeBodyColor);
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+    font-family: inherit;
+    resize: vertical;
+    padding: 0;
+}
+
 .pg-result-actions {
     display: flex;
     gap: 6px;
