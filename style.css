@@ -359,7 +359,8 @@ textarea.pg-result-editable {
     width: 100%;
     min-height: 150px;
     background: transparent;
-    border: none;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
     outline: none;
     font-size: 0.85em;
     color: var(--SmartThemeBodyColor);
@@ -368,7 +369,7 @@ textarea.pg-result-editable {
     white-space: pre-wrap;
     font-family: inherit;
     resize: vertical;
-    padding: 0;
+    padding: 6px 8px;
 }
 
 .pg-result-actions {
