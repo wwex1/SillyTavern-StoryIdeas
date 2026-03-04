@@ -567,15 +567,23 @@ function showPersonaResult() {
 
     const result = $(`
         <div class="pg-result">
-            <div class="pg-result-text">${esc(text)}</div>
+            <textarea class="pg-result-text pg-result-editable">${esc(text)}</textarea>
             <div class="pg-result-actions">
                 <button class="si-idea-act pg-act-copy">📋 복사</button>
                 <button class="si-idea-act pg-act-translate">🌐 번역</button>
             </div>
         </div>
     `);
-    result.find('.pg-act-copy').on('click', async () => { const ok = await copyToClipboard(text); if (ok) toastr.success('복사됨'); });
-    result.find('.pg-act-translate').on('click', () => { translatePersona(text); });
+
+    const resultTextarea = result.find('.pg-result-editable');
+    resultTextarea.on('input', () => {
+        const edited = resultTextarea.val();
+        cfg.personaHistory[cfg.personaViewIdx] = edited;
+        persist();
+    });
+
+    result.find('.pg-act-copy').on('click', async () => { const ok = await copyToClipboard(resultTextarea.val()); if (ok) toastr.success('복사됨'); });
+    result.find('.pg-act-translate').on('click', () => { translatePersona(resultTextarea.val()); });
     block.append(result);
 
     const revise = $(`
