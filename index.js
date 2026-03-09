@@ -87,7 +87,7 @@ function esc(str) {
 
 function chatKey() { return getCurrentChatId() || null; }
 
-// 모드별 캐시 (ideas/choices)
+// 모드별 캐시 (ideas/choices) — 쓰기용 (없으면 생성)
 function getCache(mode) {
     const key = chatKey();
     if (!key) return null;
@@ -100,6 +100,16 @@ function getCache(mode) {
         persist();
     }
     return cacheObj[key];
+}
+
+// 모드별 캐시 — 읽기용 (없으면 null, 빈 캐시 생성 안 함)
+function peekCache(mode) {
+    const key = chatKey();
+    if (!key) return null;
+    const cacheObj = mode === 'choices' ? cfg.choicesCache : cfg.cache;
+    const entry = cacheObj[key];
+    if (!entry || !entry.history?.length) return null;
+    return entry;
 }
 
 // ─── 복사 유틸 ───
@@ -359,8 +369,8 @@ function bindEvents() {
     menuBtn.addEventListener('click', async () => {
         if (!cfg.enabled || generating) return;
         $('#extensionsMenu').hide(); activeMode = 'ideas';
-        const cache = getCache('ideas');
-        if (cache && cache.history.length > 0) { renderBlock('ideas'); scrollToBlock(); return; }
+        const cache = peekCache('ideas');
+        if (cache) { renderBlock('ideas'); scrollToBlock(); return; }
         await generate(false, 'ideas');
     });
 
@@ -373,8 +383,8 @@ function bindEvents() {
     choicesBtn.addEventListener('click', async () => {
         if (!cfg.enabled || generating) return;
         $('#extensionsMenu').hide(); activeMode = 'choices';
-        const cache = getCache('choices');
-        if (cache && cache.history.length > 0) { renderBlock('choices'); scrollToBlock(); return; }
+        const cache = peekCache('choices');
+        if (cache) { renderBlock('choices'); scrollToBlock(); return; }
         await generate(false, 'choices');
     });
 
@@ -403,14 +413,6 @@ function bindEvents() {
 
     ctx.eventSource.on(event_types.CHAT_CHANGED, () => {
         removeBlock();
-        setTimeout(() => {
-            if (!cfg.enabled) return;
-            const ideasCache = getCache('ideas');
-            const choicesCache = getCache('choices');
-            if (activeMode === 'choices' && choicesCache && choicesCache.history.length > 0) { renderBlock('choices'); }
-            else if (ideasCache && ideasCache.history.length > 0) { activeMode = 'ideas'; renderBlock('ideas'); }
-            else if (choicesCache && choicesCache.history.length > 0) { activeMode = 'choices'; renderBlock('choices'); }
-        }, 500);
     });
 }
 
@@ -466,7 +468,7 @@ async function generate(isRetry, mode) {
         renderBlock(mode); scrollToBlock();
     } catch (err) {
         console.error(`[${EXT_NAME}]`, err); toastr.error(`${label} 실패: ${err.message}`);
-        if (isRetry) { const cache = getCache(mode); if (cache && cache.history.length > 0) renderBlock(mode); }
+        if (isRetry) { const cache = peekCache(mode); if (cache) renderBlock(mode); }
         else { showFail(err.message, mode); }
     } finally { generating = false; }
 }
@@ -795,7 +797,7 @@ function buildIdeasInstruction() {
     const langNote = (cfg.lang || 'en') === 'ko' ? '⚠️ 모든 추천을 한국어로 작성하세요.' : '⚠️ Write all suggestions in English.';
     const detailMap = { brief: 'Keep each description to 1-2 sentences (brief and concise)', normal: 'Write 3-5 sentences per description (moderate detail)' };
     let avoidNote = '';
-    const cache = getCache('ideas');
+    const cache = peekCache('ideas');
     if (cache && cache.history.length > 0) {
         const prevTitles = [];
         for (const ideas of cache.history) { for (const idea of ideas) { if (idea.title) prevTitles.push(idea.title); } }
@@ -812,7 +814,7 @@ function buildChoicesInstruction() {
     else langNote = '⚠️ Write all choices in English.';
     const detailMap = { brief: 'Keep each choice to 1-3 sentences (brief)', normal: 'Write 3-6 sentences per choice (moderate detail)' };
     let avoidNote = '';
-    const cache = getCache('choices');
+    const cache = peekCache('choices');
     if (cache && cache.history.length > 0) {
         const prevBodies = [];
         for (const choices of cache.history) { for (const c of choices) { if (c.body) prevBodies.push(c.body.substring(0, 60)); } }
@@ -921,7 +923,7 @@ function parseChoices(content) {
 
 function renderBlock(mode) {
     removeBlock();
-    const cache = getCache(mode); if (!cache || cache.history.length === 0) return;
+    const cache = peekCache(mode); if (!cache) return;
     const total = cache.history.length, idx = cache.viewIdx, items = cache.history[idx];
     const isChoices = mode === 'choices';
     const blockTitle = isChoices ? '🎯 선택지' : '💡 에피소드 추천';
